@@ -17,7 +17,7 @@ public class DBConnectionBuilder {
 	
 	private static final String configuration="jdbc:mysql://localhost:3306/Broadening";	
 	private static final String dbUser ="root";
-	private static final String dbPassword ="opacity7!";
+	private static final String dbPassword ="";
 
 //	private static final String configuration="jdbc:mysql://172.16.93.162/PDR_Calc";	
 //	private static final String dbUser ="root";
