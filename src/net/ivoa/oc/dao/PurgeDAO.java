@@ -135,7 +135,7 @@ public class PurgeDAO {
 		conn.close();
 	}
 
-	public List<Integer> getIdJobsToOldAndDeleteThem() throws SQLException,
+	public List<Integer> getIdJobsToOld() throws SQLException,
 			ClassNotFoundException {
 
 		Connection conn = DBConnectionBuilder.getInstance().getConnection();
