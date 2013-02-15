@@ -31,12 +31,14 @@ public class OutputsDAO {
 
 		List<IOFile> toReturn = new ArrayList<IOFile>();
 
-		String query = "select fileExtension, OutputDir from Outputs";
+		String query = "select fileExtension, OutputDir, ResultName from Outputs";
 
 		PreparedStatement ps2 = conn.prepareStatement(query);
 		ResultSet rs = ps2.executeQuery();
 		while (rs.next()) {
-			toReturn.add(new IOFile(null, rs.getString("fileExtension"), rs.getString("OutputDir")));
+			IOFile temp =new IOFile(null, rs.getString("fileExtension"), rs.getString("OutputDir")); 
+			temp.setResultName(rs.getString("ResultName"));
+			toReturn.add(temp);
 		}
 		conn.close();
 		return toReturn;

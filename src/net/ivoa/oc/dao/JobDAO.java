@@ -5,15 +5,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import net.ivoa.pdr.commons.DateFinder;
 import net.ivoa.pdr.commons.JobBean;
 
 /**
- * @author Carlo Maria Zwolf
- * Observatoire de Paris
- * LERMA
+ * @author Carlo Maria Zwolf Observatoire de Paris LERMA
  */
 
 public class JobDAO {
@@ -28,14 +28,14 @@ public class JobDAO {
 	private JobDAO() {
 	}
 
-	
-	public List<Integer> getListOfJobsAskedByUser(Integer idUser) throws SQLException, ClassNotFoundException{
+	public List<Integer> getListOfJobsAskedByUser(Integer idUser)
+			throws SQLException, ClassNotFoundException {
 		List<Integer> toReturn = new ArrayList<Integer>();
-		
+
 		Connection conn = DBConnectionBuilder.getInstance().getConnection();
 
 		String query = "select distinct IdConfig from Notifications where IdUser=? order by IdConfig desc";
-		
+
 		PreparedStatement ps = conn.prepareStatement(query);
 		ps.setInt(1, idUser);
 		ResultSet rs = ps.executeQuery();
@@ -45,8 +45,7 @@ public class JobDAO {
 		conn.close();
 		return toReturn;
 	}
-	
-	
+
 	public Integer createNewJobAndGetIdConfig() throws SQLException,
 			ClassNotFoundException {
 		Connection conn = DBConnectionBuilder.getInstance().getConnection();
@@ -146,44 +145,48 @@ public class JobDAO {
 		return toReturn;
 	}
 
-	public void insertResults(Integer idConfiguration, String urlResult)
-			throws SQLException, ClassNotFoundException {
+	public void insertResults(Integer idConfiguration, String urlResult,
+			String resultName) throws SQLException, ClassNotFoundException {
 		Connection conn = DBConnectionBuilder.getInstance().getConnection();
 
-		String query = "insert into Results (IdConfig, URLResults) values (?,?)";
+		String query = "insert into Results (IdConfig, URLResults, ResultName) values (?,?,?)";
 		PreparedStatement ps = conn.prepareStatement(query);
 		ps.setInt(1, idConfiguration);
 		ps.setString(2, urlResult);
+		ps.setString(3, resultName);
 		ps.execute();
 
 		conn.close();
 	}
 
-	public List<String> getResultsFromIdJob(Integer idConfiguration)
+	public Map<String, String> getResultsFromIdJob(Integer idConfiguration)
 			throws SQLException, ClassNotFoundException {
-		List<String> toReturn = new ArrayList<String>();
+		Map<String, String> toReturn = new HashMap<String, String>();
 		Connection conn = DBConnectionBuilder.getInstance().getConnection();
-		String query = "select URLResults from Results where IdConfig=?";
+		String query = "select URLResults, ResultName from Results where IdConfig=?";
 
 		PreparedStatement ps2 = conn.prepareStatement(query);
 		ps2.setInt(1, idConfiguration);
 
 		ResultSet rs = ps2.executeQuery();
 		while (rs.next()) {
-			toReturn.add(rs.getString(1));
+			String key = rs.getString("ResultName");
+			String value = rs.getString("URLResults");
+			toReturn.put(key, value);
 		}
 		conn.close();
 
 		return toReturn;
 	}
-	
-	public String getDateWhereUserAskedTheJob(Integer idUser, Integer idJob) throws SQLException, ClassNotFoundException{
+
+	public String getDateWhereUserAskedTheJob(Integer idUser, Integer idJob)
+			throws SQLException, ClassNotFoundException {
 		Connection conn = DBConnectionBuilder.getInstance().getConnection();
-		String toReturn=null;
-		
+		String toReturn = null;
+
 		String query = "select max(DemandDate) from Notifications where IdUser=? and IdConfig=?";
 		PreparedStatement ps2 = conn.prepareStatement(query);
-		ps2.setInt(1, idUser);		
+		ps2.setInt(1, idUser);
 		ps2.setInt(2, idJob);
 		ResultSet rs = ps2.executeQuery();
 		while (rs.next()) {
@@ -192,14 +195,15 @@ public class JobDAO {
 		conn.close();
 		return toReturn;
 	}
-	
-	public String getDateWhereUserReceiveNotificationForJob(Integer idUser, Integer idJob)throws SQLException, ClassNotFoundException{
+
+	public String getDateWhereUserReceiveNotificationForJob(Integer idUser,
+			Integer idJob) throws SQLException, ClassNotFoundException {
 		Connection conn = DBConnectionBuilder.getInstance().getConnection();
-		String toReturn=null;
-		
+		String toReturn = null;
+
 		String query = "select max(NotificationDate) from Notifications where IdUser=? and IdConfig=?";
 		PreparedStatement ps2 = conn.prepareStatement(query);
-		ps2.setInt(1, idUser);		
+		ps2.setInt(1, idUser);
 		ps2.setInt(2, idJob);
 		ResultSet rs = ps2.executeQuery();
 		while (rs.next()) {
@@ -208,8 +212,7 @@ public class JobDAO {
 		conn.close();
 		return toReturn;
 	}
-	
-	
+
 	public JobBean getJobBeanFromIdJob(Integer idJob) throws SQLException,
 			ClassNotFoundException {
 		Connection conn = DBConnectionBuilder.getInstance().getConnection();
