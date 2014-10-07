@@ -55,65 +55,7 @@ public class PurgeDAO {
 		return toReturn;
 	}
 
-	public void purge() throws SQLException, ClassNotFoundException {
-
-		Connection conn = DBConnectionBuilder.getInstance().getConnection();
-
-		Map<String, String> nameTypesMap = RawParameterDao.getInstance()
-				.getParentParamTypes();
-
-		Map<String, String> infMap = PurgeDAO.getInstance().getInfMap(conn);
-		Map<String, String> supMap = PurgeDAO.getInstance().getMaxMap(conn);
-
-		List<String> queries = new ArrayList<String>();
-
-		for (Map.Entry<String, String> entry : infMap.entrySet()) {
-
-			String paramName = entry.getKey();
-			String paramValue = entry.getValue();
-
-			String castTpe = PurgeDAO.getInstance().getCastTypeFromType(
-					nameTypesMap.get(paramName));
-
-			String query = "delete from ConfigurationsDetails where ParamName ='"
-					+ paramName
-					+ "' and cast(ParamValue as "
-					+ castTpe
-					+ ") < " + paramValue;
-
-			queries.add(query);
-		}
-
-		for (Map.Entry<String, String> entry : supMap.entrySet()) {
-
-			String paramName = entry.getKey();
-			String paramValue = entry.getValue();
-
-			String castTpe = PurgeDAO.getInstance().getCastTypeFromType(
-					nameTypesMap.get(paramName));
-
-			String query = "delete from ConfigurationsDetails where ParamName ='"
-					+ paramName
-					+ "' and cast(ParamValue as "
-					+ castTpe
-					+ ") > " + paramValue;
-
-			queries.add(query);
-		}
-
-		queries.add("delete from Job where IdConfig not in (select distinct IdConfig from ConfigurationsDetails)");
-		queries.add("delete from Notifications where IdConfig not in (select distinct IdConfig from ConfigurationsDetails)");
-		queries.add("delete from Results where IdConfig not in (select distinct IdConfig from ConfigurationsDetails)");
-
-		Statement st = conn.createStatement();
-		for (String query : queries) {
-			st.addBatch(query);
-		}
-		@SuppressWarnings("unused")
-		int[] updatedCol = st.executeBatch();
-		conn.close();
-
-	}
+	
 
 	public void removeJobsFromDB(List<Integer> IdJobs)
 			throws SQLException, ClassNotFoundException {

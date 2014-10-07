@@ -12,9 +12,7 @@ import java.util.Map;
 import net.ivoa.pdr.commons.ParamConfiguration;
 
 /**
- * @author Carlo Maria Zwolf
- * Observatoire de Paris
- * LERMA
+ * @author Carlo Maria Zwolf Observatoire de Paris LERMA
  */
 
 public class ParametersDao {
@@ -26,42 +24,52 @@ public class ParametersDao {
 
 	private ParametersDao() {
 	}
-	
-	public Integer persistConfigurationAndGetId(ParamConfiguration configuration, Integer userId) throws SQLException, ClassNotFoundException{
-		
-		Integer IdConfig = ParametersDao.getInstance().getIdExistingConfiguration(configuration);
-		
-		if(null==IdConfig){
+
+	public Integer persistConfigurationAndGetId(
+			ParamConfiguration configuration, Integer userId, String gridID,
+			String jobNickName, Boolean mailRequested) throws SQLException,
+			ClassNotFoundException {
+
+		Integer IdConfig = ParametersDao.getInstance()
+				.getIdExistingConfiguration(configuration);
+
+		if (null == IdConfig) {
 			IdConfig = JobDAO.getInstance().createNewJobAndGetIdConfig();
-			ParametersDao.getInstance().insertConfigurationValues(configuration, IdConfig);
+			ParametersDao.getInstance().insertConfigurationValues(
+					configuration, IdConfig);
 		}
-		NotificationsDAO.getInstance().updateNotifications(userId, IdConfig);
-		
+		NotificationsDAO.getInstance().updateNotifications(userId, IdConfig,gridID,jobNickName,mailRequested);
+
 		return IdConfig;
 	}
-	
-	private void insertConfigurationValues(ParamConfiguration configuration, Integer idConfig) throws SQLException, ClassNotFoundException{
+
+	private void insertConfigurationValues(ParamConfiguration configuration,
+			Integer idConfig) throws SQLException, ClassNotFoundException {
 		Connection conn = DBConnectionBuilder.getInstance().getConnection();
-		for(Map.Entry<String, String> entry : configuration.getParamMap().entrySet()){
-			ParametersDao.getInstance().insertParam(entry.getKey(), entry.getValue(), idConfig, conn);
+		for (Map.Entry<String, String> entry : configuration.getParamMap()
+				.entrySet()) {
+			ParametersDao.getInstance().insertParam(entry.getKey(),
+					entry.getValue(), idConfig, conn);
 		}
 		conn.close();
 	}
-	
-	private void insertParam(String paramName, String paramValue, Integer idConfig, Connection conn) throws SQLException{
+
+	private void insertParam(String paramName, String paramValue,
+			Integer idConfig, Connection conn) throws SQLException {
 		String query = "insert into ConfigurationsDetails (IdConfig, ParamName, ParamValue) values (?,?,?)";
 		PreparedStatement ps = conn.prepareStatement(query);
-		
+
 		ps.setInt(1, idConfig);
 		ps.setString(2, paramName);
 		ps.setString(3, paramValue);
-		
+
 		ps.execute();
 		ps.close();
 	}
-	
-	public Integer getIdExistingConfiguration(ParamConfiguration configuration) throws SQLException, ClassNotFoundException{
-		
+
+	public Integer getIdExistingConfiguration(ParamConfiguration configuration)
+			throws SQLException, ClassNotFoundException {
+
 		Connection conn = DBConnectionBuilder.getInstance().getConnection();
 		Integer toReturn = null;
 		List<String> queries = new ArrayList<String>();
@@ -93,7 +101,7 @@ public class ParametersDao {
 			}
 		}
 		for (int k = 1; k < queries.size(); k++) {
-			assembledQuery= assembledQuery+")";
+			assembledQuery = assembledQuery + ")";
 		}
 
 		PreparedStatement ps = conn.prepareStatement(assembledQuery);
@@ -103,32 +111,33 @@ public class ParametersDao {
 		}
 		conn.close();
 		return toReturn;
-		
+
 	}
 
 	public boolean doesConfigAlreadyExist(ParamConfiguration configuration)
 			throws SQLException, ClassNotFoundException {
 
-		return null!=ParametersDao.getInstance().getIdExistingConfiguration(configuration);
+		return null != ParametersDao.getInstance().getIdExistingConfiguration(
+				configuration);
 	}
-	
-	public Map<String,String> getConfigurationMap(Integer idConfiguration) throws SQLException, ClassNotFoundException{
-	Connection conn = DBConnectionBuilder.getInstance().getConnection();
-		
-		Map<String,String> toReturn = new HashMap<String, String>();
+
+	public Map<String, String> getConfigurationMap(Integer idConfiguration)
+			throws SQLException, ClassNotFoundException {
+		Connection conn = DBConnectionBuilder.getInstance().getConnection();
+
+		Map<String, String> toReturn = new HashMap<String, String>();
 
 		String query = "select ParamName, ParamValue from ConfigurationsDetails where IdConfig=? order by ParamName";
 
 		PreparedStatement ps = conn.prepareStatement(query);
 		ps.setInt(1, idConfiguration);
-		
+
 		ResultSet rs = ps.executeQuery();
 		while (rs.next()) {
-			toReturn.put(rs.getString("ParamName"),rs.getString("ParamValue"));
+			toReturn.put(rs.getString("ParamName"), rs.getString("ParamValue"));
 		}
 		conn.close();
 		return toReturn;
 	}
-	
 
 }

@@ -12,9 +12,7 @@ import java.util.Map;
 import net.ivoa.pdr.commons.DateFinder;
 
 /**
- * @author Carlo Maria Zwolf
- * Observatoire de Paris
- * LERMA
+ * @author Carlo Maria Zwolf Observatoire de Paris LERMA
  */
 
 public class UserDAO {
@@ -41,9 +39,10 @@ public class UserDAO {
 		conn.close();
 		return idUser;
 	}
-	
-	public String getMailFromUserId(Integer userId) throws SQLException, ClassNotFoundException{
-		Connection conn= DBConnectionBuilder.getInstance().getConnection();
+
+	public String getMailFromUserId(Integer userId) throws SQLException,
+			ClassNotFoundException {
+		Connection conn = DBConnectionBuilder.getInstance().getConnection();
 		String query = "select Email from User where IdUser =?";
 		String toReturn = null;
 		PreparedStatement ps = conn.prepareStatement(query);
@@ -56,7 +55,6 @@ public class UserDAO {
 		conn.close();
 		return toReturn;
 	}
-	
 
 	private void insertUser(String mail, Connection conn) throws SQLException {
 		String query = "insert into User (Email) values (?)";
@@ -84,7 +82,7 @@ public class UserDAO {
 		Map<Integer, String> toReturn = new HashMap<Integer, String>();
 		Connection conn = DBConnectionBuilder.getInstance().getConnection();
 
-		String query = "select U.IdUser, U.Email from User U, Notifications N where N.IdUser = U.idUser and IdConfig=? and Notified=0";
+		String query = "select U.IdUser, U.Email from User U, Notifications N where N.IdUser = U.idUser and IdConfig=? and N.Notified=0";
 
 		PreparedStatement ps = conn.prepareStatement(query);
 		ps.setInt(1, idConfig);
@@ -97,16 +95,18 @@ public class UserDAO {
 
 		return toReturn;
 	}
-	
-	public List<List<String>> getUserThatAskedForAJob(Integer idConfig) throws SQLException, ClassNotFoundException{
+
+	public List<List<String>> getUserThatAskedForAJob(Integer idConfig)
+			throws SQLException, ClassNotFoundException {
 		List<List<String>> toReturn = new ArrayList<List<String>>();
-		
+
 		List<String> userMail = new ArrayList<String>();
-		List<String> dateDemande =  new ArrayList<String>();
-		
+		List<String> dateDemande = new ArrayList<String>();
+		List<String> userWantMail = new ArrayList<String>();
+
 		Connection conn = DBConnectionBuilder.getInstance().getConnection();
 
-		String query = "select U.Email, N.DemandDate from User U, Notifications N where N.IdUser = U.idUser and IdConfig=?";
+		String query = "select U.Email, N.DemandDate, N.UserWantMail from User U, Notifications N where N.IdUser = U.idUser and IdConfig=?";
 
 		PreparedStatement ps = conn.prepareStatement(query);
 		ps.setInt(1, idConfig);
@@ -115,11 +115,20 @@ public class UserDAO {
 		while (rs.next()) {
 			userMail.add(rs.getString(1));
 			dateDemande.add(rs.getString(2));
+
+			boolean wantMail = rs.getBoolean(3);
+			if (wantMail) {
+				userWantMail.add("true");
+			} else {
+				userWantMail.add("false");
+			}
+
 		}
 		conn.close();
 		toReturn.add(userMail);
 		toReturn.add(dateDemande);
-		
+		toReturn.add(userWantMail);
+
 		return toReturn;
 	}
 

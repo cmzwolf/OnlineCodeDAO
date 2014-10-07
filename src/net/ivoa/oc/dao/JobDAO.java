@@ -128,13 +128,13 @@ public class JobDAO {
 		return toReturn;
 	}
 
-	public List<Integer> getFinishedJobs() throws SQLException,
+	public List<Integer> getFinishedJobsToBeNotified() throws SQLException,
 			ClassNotFoundException {
 		Connection conn = DBConnectionBuilder.getInstance().getConnection();
 
 		List<Integer> toReturn = new ArrayList<Integer>();
 
-		String query = "select IdConfig from Job where Processed=1 and Finished=1";
+		String query = "select distinct J.IdConfig from Job J , Notifications N where J.Processed=1 and J.Finished=1 and N.Notified=0 and N.IdConfig=J.IdConfig";
 
 		PreparedStatement ps2 = conn.prepareStatement(query);
 		ResultSet rs = ps2.executeQuery();
@@ -232,7 +232,7 @@ public class JobDAO {
 			String processingDate = rs.getString("ProcessingDate");
 			String finishingDate = rs.getString("FinishingDate");
 
-			toReturn.setJobValid(idJob == idConfigInDB);
+			toReturn.setJobValid(idJob.equals(idConfigInDB));
 			toReturn.setIdJob(idJob);
 			toReturn.setIdService(idService);
 			toReturn.setJobProcessed(processed);
@@ -251,7 +251,43 @@ public class JobDAO {
 				toReturn.setUserAskedThisJob(UserDAO.getInstance()
 						.getUserThatAskedForAJob(idJob));
 
+			} else {
+				System.out.println("Warning!!! The Job " + idJob
+						+ "is marked as invalid (idJob=" + idJob
+						+ " and IdCOnfig= " + idConfigInDB + ")");
 			}
+
+		}
+		conn.close();
+		return toReturn;
+	}
+
+	public JobBean getJobBeanFromIdJobLight(Integer idJob) throws SQLException, ClassNotFoundException {
+		Connection conn = DBConnectionBuilder.getInstance().getConnection();
+		JobBean toReturn = new JobBean();
+
+		String query = "select IdConfig, IdService, Processed, Finished, DemandDate, ProcessingDate, FinishingDate from Job where IdConfig=?";
+		PreparedStatement ps2 = conn.prepareStatement(query);
+		ps2.setInt(1, idJob);
+
+		ResultSet rs = ps2.executeQuery();
+		while (rs.next()) {
+			Integer idConfigInDB = rs.getInt("IdConfig");
+			Integer idService = rs.getInt("IdService");
+			Boolean processed = rs.getBoolean("Processed");
+			Boolean finished = rs.getBoolean("Finished");
+			String dateDemand = rs.getString("Processed");
+			String processingDate = rs.getString("ProcessingDate");
+			String finishingDate = rs.getString("FinishingDate");
+
+			toReturn.setJobValid(idJob.equals(idConfigInDB));
+			toReturn.setIdJob(idJob);
+			toReturn.setIdService(idService);
+			toReturn.setJobProcessed(processed);
+			toReturn.setJobfinished(finished);
+			toReturn.setDemandDate(dateDemand);
+			toReturn.setProcessingDate(processingDate);
+			toReturn.setFinishingDate(finishingDate);
 
 		}
 		conn.close();
