@@ -18,7 +18,7 @@ import net.ivoa.pdr.commons.JobBean;
 
 public class JobDAO {
 	private static final JobDAO instance = new JobDAO();
-	private static final String QUERY1 = "insert into Job (IdService,IdConfig,Processed,Finished,DemandDate) values( (select max(IdService) from Service), (select ifnull( (select 1+max(IdConfig) from ConfigurationsDetails) ,1)), 0 ,0,?)";
+	private static final String QUERY1 = "insert into Job (IdService,IdConfig,Processed,Finished,hasError,DemandDate) values( (select max(IdService) from Service), (select ifnull( (select 1+max(IdConfig) from ConfigurationsDetails) ,1)), 0 ,0 ,0 , ?)";
 	private static final String QUERY2 = "select max(IdConfig) from Job";
 
 	public static JobDAO getInstance() {
@@ -45,6 +45,25 @@ public class JobDAO {
 		conn.close();
 		return toReturn;
 	}
+	
+	public List<Integer> getListOfJobsAskedByUserAndGridId(Integer idUser, String gridId)
+			throws SQLException, ClassNotFoundException {
+		List<Integer> toReturn = new ArrayList<Integer>();
+
+		Connection conn = DBConnectionBuilder.getInstance().getConnection();
+
+		String query = "select distinct IdConfig from Notifications where IdUser=? and IdGrid=? order by IdConfig desc";
+
+		PreparedStatement ps = conn.prepareStatement(query);
+		ps.setInt(1, idUser);
+		ps.setString(2, gridId);
+		ResultSet rs = ps.executeQuery();
+		while (rs.next()) {
+			toReturn.add(rs.getInt(1));
+		}
+		conn.close();
+		return toReturn;
+	}
 
 	public Integer createNewJobAndGetIdConfig() throws SQLException,
 			ClassNotFoundException {
@@ -62,6 +81,7 @@ public class JobDAO {
 		while (rs.next()) {
 			toReturn = rs.getInt(1);
 		}
+		conn.commit();
 		conn.close();
 		return toReturn;
 	}
@@ -93,7 +113,7 @@ public class JobDAO {
 		ps.setString(1, DateFinder.getInstance().getCurrentDate());
 		ps.setInt(2, idConfiguration);
 		ps.execute();
-
+		conn.commit();
 		conn.close();
 
 	}
@@ -155,7 +175,7 @@ public class JobDAO {
 		ps.setString(2, urlResult);
 		ps.setString(3, resultName);
 		ps.execute();
-
+		conn.commit();
 		conn.close();
 	}
 
@@ -174,6 +194,7 @@ public class JobDAO {
 			String value = rs.getString("URLResults");
 			toReturn.put(key, value);
 		}
+		conn.commit();
 		conn.close();
 
 		return toReturn;
@@ -218,7 +239,7 @@ public class JobDAO {
 		Connection conn = DBConnectionBuilder.getInstance().getConnection();
 		JobBean toReturn = new JobBean();
 
-		String query = "select IdConfig, IdService, Processed, Finished, DemandDate, ProcessingDate, FinishingDate from Job where IdConfig=?";
+		String query = "select IdConfig, IdService, Processed, Finished, hasError, DemandDate, ProcessingDate, FinishingDate from Job where IdConfig=?";
 		PreparedStatement ps2 = conn.prepareStatement(query);
 		ps2.setInt(1, idJob);
 
@@ -228,6 +249,7 @@ public class JobDAO {
 			Integer idService = rs.getInt("IdService");
 			Boolean processed = rs.getBoolean("Processed");
 			Boolean finished = rs.getBoolean("Finished");
+			Boolean hasError = rs.getBoolean("hasError");
 			String dateDemand = rs.getString("Processed");
 			String processingDate = rs.getString("ProcessingDate");
 			String finishingDate = rs.getString("FinishingDate");
@@ -240,6 +262,7 @@ public class JobDAO {
 			toReturn.setDemandDate(dateDemand);
 			toReturn.setProcessingDate(processingDate);
 			toReturn.setFinishingDate(finishingDate);
+			toReturn.setHasError(hasError);
 
 			if (toReturn.isJobValid()) {
 				toReturn.setJobResults(JobDAO.getInstance()
@@ -292,6 +315,15 @@ public class JobDAO {
 		}
 		conn.close();
 		return toReturn;
+	}
+
+	public void markJobAsHavingErrors(Integer idConfiguration) throws ClassNotFoundException, SQLException {
+		String query = "update Job set hasError=1 where IdConfig=?";
+		Connection conn = DBConnectionBuilder.getInstance().getConnection();
+		PreparedStatement ps = conn.prepareStatement(query);
+		ps.setInt(1, idConfiguration);
+		ps.execute();
+		conn.close();
 	}
 
 }

@@ -6,9 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
- * @author Carlo Maria Zwolf
- * Observatoire de Paris
- * LERMA
+ * @author Carlo Maria Zwolf Observatoire de Paris LERMA
  */
 
 public class GlobalTechConfigDAO {
@@ -57,4 +55,21 @@ public class GlobalTechConfigDAO {
 		return toReturn;
 	}
 
+	public String getGWTContainer() throws SQLException, ClassNotFoundException {
+		Connection conn = DBConnectionBuilder.getInstance().getConnection();
+
+		String toReturn = null;
+
+		String query = "select GWTGUIContainer from GlobalTechConfig";
+
+		PreparedStatement ps2 = conn.prepareStatement(query);
+		ResultSet rs = ps2.executeQuery();
+		while (rs.next()) {
+			toReturn = rs.getString(1);
+		}
+		conn.close();
+
+		return toReturn;
+	}
+	
 }

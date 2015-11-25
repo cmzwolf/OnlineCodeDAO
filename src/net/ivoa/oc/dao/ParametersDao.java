@@ -1,5 +1,7 @@
 package net.ivoa.oc.dao;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -38,7 +40,8 @@ public class ParametersDao {
 			ParametersDao.getInstance().insertConfigurationValues(
 					configuration, IdConfig);
 		}
-		NotificationsDAO.getInstance().updateNotifications(userId, IdConfig,gridID,jobNickName,mailRequested);
+		NotificationsDAO.getInstance().updateNotifications(userId, IdConfig,
+				gridID, jobNickName, mailRequested);
 
 		return IdConfig;
 	}
@@ -51,6 +54,7 @@ public class ParametersDao {
 			ParametersDao.getInstance().insertParam(entry.getKey(),
 					entry.getValue(), idConfig, conn);
 		}
+		conn.commit();
 		conn.close();
 	}
 
@@ -134,7 +138,16 @@ public class ParametersDao {
 
 		ResultSet rs = ps.executeQuery();
 		while (rs.next()) {
-			toReturn.put(rs.getString("ParamName"), rs.getString("ParamValue"));
+			String parameterName = rs.getString("ParamName");
+			String parameterValue;
+			try {
+				parameterValue = URLDecoder.decode(rs.getString("ParamValue"),
+						"UTF-8");
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+				parameterValue = rs.getString("ParamValue");
+			}
+			toReturn.put(parameterName, parameterValue);
 		}
 		conn.close();
 		return toReturn;

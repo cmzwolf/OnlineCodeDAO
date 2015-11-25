@@ -52,6 +52,7 @@ public class UserDAO {
 		while (rs.next()) {
 			toReturn = rs.getString(1);
 		}
+		conn.commit();
 		conn.close();
 		return toReturn;
 	}
