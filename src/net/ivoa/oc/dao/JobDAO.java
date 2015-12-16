@@ -45,9 +45,9 @@ public class JobDAO {
 		conn.close();
 		return toReturn;
 	}
-	
-	public List<Integer> getListOfJobsAskedByUserAndGridId(Integer idUser, String gridId)
-			throws SQLException, ClassNotFoundException {
+
+	public List<Integer> getListOfJobsAskedByUserAndGridId(Integer idUser,
+			String gridId) throws SQLException, ClassNotFoundException {
 		List<Integer> toReturn = new ArrayList<Integer>();
 
 		Connection conn = DBConnectionBuilder.getInstance().getConnection();
@@ -200,6 +200,31 @@ public class JobDAO {
 		return toReturn;
 	}
 
+	public List<Map<String, String>> getFinishedResultsByGridAndUser(
+			String gridId, Integer idUser) throws ClassNotFoundException, SQLException {
+		
+		List<Map<String,String>> toReturn = new ArrayList<Map<String,String>>();
+		List<Integer> idJobFinishedIntoGrid=new ArrayList<Integer>();
+		
+		String query = "select distinct N.IdConfig from Notifications N, Job J where J.IdConfig = N.IdConfig and J.Finished=1 and N.IdUser=? and N.IdGrid=?";
+		Connection conn = DBConnectionBuilder.getInstance().getConnection();
+		PreparedStatement ps = conn.prepareStatement(query);
+		ps.setInt(1, idUser);
+		ps.setString(2, gridId);
+		ResultSet rs = ps.executeQuery();
+		while (rs.next()) {
+			Integer currentId = rs.getInt(1);
+			idJobFinishedIntoGrid.add(currentId);
+		}
+		conn.commit();
+		conn.close();
+
+		for(Integer currentJobId : idJobFinishedIntoGrid){
+			toReturn.add(JobDAO.getInstance().getResultsFromIdJob(currentJobId));
+		}
+		return toReturn;
+	}
+
 	public String getDateWhereUserAskedTheJob(Integer idUser, Integer idJob)
 			throws SQLException, ClassNotFoundException {
 		Connection conn = DBConnectionBuilder.getInstance().getConnection();
@@ -285,7 +310,8 @@ public class JobDAO {
 		return toReturn;
 	}
 
-	public JobBean getJobBeanFromIdJobLight(Integer idJob) throws SQLException, ClassNotFoundException {
+	public JobBean getJobBeanFromIdJobLight(Integer idJob) throws SQLException,
+			ClassNotFoundException {
 		Connection conn = DBConnectionBuilder.getInstance().getConnection();
 		JobBean toReturn = new JobBean();
 
@@ -317,7 +343,8 @@ public class JobDAO {
 		return toReturn;
 	}
 
-	public void markJobAsHavingErrors(Integer idConfiguration) throws ClassNotFoundException, SQLException {
+	public void markJobAsHavingErrors(Integer idConfiguration)
+			throws ClassNotFoundException, SQLException {
 		String query = "update Job set hasError=1 where IdConfig=?";
 		Connection conn = DBConnectionBuilder.getInstance().getConnection();
 		PreparedStatement ps = conn.prepareStatement(query);
